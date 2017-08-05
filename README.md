@@ -7,3 +7,4 @@ features:
   2. translate and merge multi pot file to po file
   3. load po file
   4. replace string in html from po file
+  5. format html prettify by bs4
