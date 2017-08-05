@@ -31,43 +31,66 @@ def load_translated_po_to_list(filename):
             msglist.append(result)
     return msglist
 
+def translate_single_html_from_po(htmlfile, msgs):
+    print('===================' + htmlfile + '===================')
+    if os.path.isfile(htmlfile):
+        html_doc = ''
+        file = open(htmlfile,"r")
+        try:
+            html_doc = file.read()
+        except Exception,e:
+            print e.message
+        finally:
+            file.close()
+        #print html_doc
+        soup = BeautifulSoup(html_doc,'lxml')
+        soup.encode("utf-8")
+        #print soup.prettify()
+        for child in soup.descendants:
+            #print(type(child.string),child.string)
+            for msg in msgs:
+                #print msg
+                s = json.loads(msg)
+                #print(s['msgid'], s['msgstr'])
+                if s['msgid'] == child.string:
+                    print('Found [%s]]'%child.string)
+                    child.string = s['msgstr']
+        #print(type(soup.prettify()), soup.prettify(formatter="html"))
+        html_doc = ''
+        html_doc = soup.prettify(formatter="html")
+        #print type(html_doc)
+        #print html_doc
+        file = open(htmlfile, 'w')
+        try:
+            file.write(html_doc.encode('utf-8'))
+        except Exception,e:
+            print e.message
+        finally:
+            file.close()
+
 def translate_html_from_po(arguments):
     msgs = load_translated_po_to_list("translate.po")
-    for htmlfile in arguments.htmlfiles:
-        if os.path.isfile(htmlfile):
-            html_doc = ''
-            file = open(htmlfile,"r")
-            try:
-                html_doc = file.read()
-            except Exception,e:
-                print e.message
-            finally:
-                file.close()
-            #print html_doc
-            soup = BeautifulSoup(html_doc,'lxml')
-            soup.encode("utf-8")
-            #print soup.prettify()
-            for child in soup.descendants:
-                #print(type(child.string),child.string)
-                for msg in msgs:
-                    #print msg
-                    s = json.loads(msg)
-                    #print(s['msgid'], s['msgstr'])
-                    if s['msgid'] == child.string:
-                        print('========================>Found [%s]]'%child.string)
-                        child.string = s['msgstr']
-            #print(type(soup.prettify()), soup.prettify(formatter="html"))
-            html_doc = ''
-            html_doc = soup.prettify(formatter="html")
-            print type(html_doc)
-            print html_doc
-            file = open(htmlfile, 'w')
-            try:
-                file.write(html_doc.encode('utf-8'))
-            except Exception,e:
-                print e.message
-            finally:
-                file.close()
+    all_results = []
+    for target in arguments.targets:
+        if os.path.isdir(target):
+            walk_results = os.walk(target)
+            for p,d,files in walk_results:
+                for f in files:
+                    fullpath = os.path.join(p,f)
+                    sysstr = platform.system()
+                    if(sysstr =="Windows"):
+                        fullpath.replace('\/', '\\')
+                    elif(sysstr == "Linux"):
+                        fullpath.replace('\\', '\/')
+                    else:
+                        print ("Other System tasks")
+                    all_results.append(fullpath)
+        elif os.path.isfile(target):
+            all_results.append(target)
+        else:
+            print "%s is a special file (socket, FIFO, device file), pass it..." % target
+    for result in all_results:
+        translate_single_html_from_po(result, msgs)
 
 def translate_html_from_po_parser(subparsers):
     """Argument parser for translate-html-from-po command.
@@ -83,7 +106,7 @@ def translate_html_from_po_parser(subparsers):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=description
     )
-    parser.add_argument('htmlfiles', nargs='*', help="HTML file")
+    parser.add_argument('targets', nargs='*', help="Directory or HTML file")
     parser.set_defaults(func=translate_html_from_po)
     return parser
 
