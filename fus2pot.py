@@ -43,18 +43,28 @@ def translate_single_html_from_po(htmlfile, msgs):
         finally:
             file.close()
         #print html_doc
-        soup = BeautifulSoup(html_doc,'lxml')
+        #soup = BeautifulSoup(html_doc,'lxml')
+        soup = BeautifulSoup(html_doc,'html.parser')
         soup.encode("utf-8")
         #print soup.prettify()
+        
+        '''
+        for string in soup.strings:
+            print len(string.strip().replace('\n', '')), string.strip().replace('\n', '').encode('utf-8') 
+        '''        
         for child in soup.descendants:
             #print(type(child.string),child.string)
+            isFound = False
             for msg in msgs:
                 #print msg
                 s = json.loads(msg)
                 #print(s['msgid'], s['msgstr'])
-                if s['msgstr'].strip() and s['msgid'] == child.string:
-                    print('Found [%s]]'%child.string)
+                if child.string is not None and s['msgstr'].strip() and s['msgid'] == child.string.strip().replace('\n', ''):
+                    isFound = True
+                    print('Found [%s]'%child.string.strip().replace('\n', '').encode('utf-8'))
                     child.string = s['msgstr']
+                    break
+        
         #print(type(soup.prettify()), soup.prettify(formatter="html"))
         html_doc = ''
         html_doc = soup.prettify(formatter="html")

@@ -1,6 +1,7 @@
 # i18n-tools
 
-fus2pot.py 
+# fus2pot.py
+Automatically translate,then manually check.
 A i18n tool that allow developer quickly translate an open source project without i18n solution to localize project.
 features:
   1. find untranslated strings to pot file
